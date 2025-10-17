@@ -1,0 +1,122 @@
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
+
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDihC1AHWHA2AHiEI-OyfzTZK4jegcUu8I",
+    authDomain: "mediscope-c5354.firebaseapp.com",
+    projectId: "mediscope-c5354",
+    storageBucket: "mediscope-c5354.firebasestorage.app",
+    messagingSenderId: "418415084423",
+    appId: "1:418415084423:web:341e77c0cd704f2ffb4922"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth();
+
+  // Redirect if not logged in
+  onAuthStateChanged(auth, (user) => {
+    if(!user) window.location.href = "/";
+  });
+
+  // Logout
+  const logoutBtn = document.getElementById('logoutBtn');
+  logoutBtn.addEventListener('click', async () => {
+    await signOut(auth);
+    window.location.href = "/";
+  });
+
+  // Initialize map
+  const map = L.map('map').setView([20.5937, 78.9629], 5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  // Geocode location
+  async function getCoordinates(location){
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`;
+    try {
+      const resp = await fetch(url);
+      const data = await resp.json();
+      if(data.length>0) return {lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon)};
+      return {lat: 20.5937, lng: 78.9629};
+    } catch { return {lat: 20.5937, lng: 78.9629}; }
+  }
+
+  // Update map markers
+  async function updateMapMarkers() {
+    map.eachLayer(layer => { if(layer instanceof L.Circle) map.removeLayer(layer); });
+    const snapshot = await getDocs(collection(db,"reports"));
+    snapshot.forEach(doc=>{
+      const data = doc.data();
+      const coords = data.coordinates || {lat:20.5937,lng:78.9629};
+      let color = "green";
+      if(data.analysis?.severity==="moderate") color="orange";
+      else if(data.analysis?.severity==="severe") color="red";
+
+      L.circle([coords.lat, coords.lng], {color, fillColor:color, fillOpacity:0.5, radius:5000})
+        .addTo(map)
+        .bindPopup(`
+          <strong>Symptoms:</strong> ${data.symptoms}<br>
+          <strong>Probable:</strong> ${data.analysis?.probable_diseases.join(", ")}<br>
+          <strong>Severity:</strong> ${data.analysis?.severity}<br>
+          <strong>Advice:</strong> ${data.analysis?.advice}
+        `);
+    });
+  }
+
+  updateMapMarkers();
+
+  // Form submission
+  const form = document.getElementById('symptomForm');
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const symptoms = document.getElementById('symptoms').value.trim();
+    const location = document.getElementById('location').value.trim();
+    if(!symptoms){ alert("Enter your symptoms!"); return; }
+
+    const resultCard = document.getElementById('resultCard');
+    const resultDiv = document.getElementById('result');
+    resultCard.style.display='block';
+    resultDiv.innerHTML='<div class="alert alert-info">Analyzing symptoms...</div>';
+
+    try{
+      // Call Flask backend
+      const formData = new FormData();
+      formData.append("symptoms", symptoms);
+      const response = await fetch("/analyze", {method:"POST", body: formData});
+      const data = await response.json();
+      const analysis = data.analysis;
+
+      // Show analysis
+      if(analysis.error){
+        resultDiv.innerHTML=`<div class="alert alert-danger">${analysis.error}</div>`;
+        return;
+      }
+
+      resultDiv.innerHTML = `
+        <div class="mb-2"><strong>Probable Diseases:</strong> ${analysis.probable_diseases.join(", ")}</div>
+        <div class="mb-2"><strong>Severity:</strong> <span class="${analysis.severity==='severe'?'text-danger':analysis.severity==='moderate'?'text-warning':'text-success'}">${analysis.severity}</span></div>
+        <div class="mb-2"><strong>Infectious Potential:</strong> ${analysis.infectious_potential}</div>
+        <div class="mb-2"><strong>Advice:</strong> ${analysis.advice}</div>
+      `;
+
+      // Geocode location
+      const coords = await getCoordinates(location);
+
+      // Save to Firestore
+      await addDoc(collection(db,"reports"), {
+        symptoms, location, coordinates: coords, analysis, timestamp: serverTimestamp()
+      });
+
+      updateMapMarkers();
+
+    }catch(err){
+      resultDiv.innerHTML='<div class="alert alert-danger">Error connecting to server.</div>';
+      console.error(err);
+    }
+  });
+</script>
