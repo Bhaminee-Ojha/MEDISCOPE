@@ -1,50 +1,47 @@
-# 🩺 MediScope — AI-Powered Symptom Analyzer
+# 🧠 MediScope — AI-Powered Health Monitoring & Outbreak Alert System
 
-**MediScope** is an AI-powered web app that takes user symptom inputs and provides possible health conditions, severity levels, and recommendations — powered by **Google Gemini**.  
-⚠️ *For educational purposes only. Not a substitute for professional medical advice.*
+**MediScope** is an LLM-powered intelligent health monitoring system that analyzes user symptoms, predicts possible diseases, and identifies early outbreak trends based on location data.
+
+> ⚕️ *For educational and research purposes only — not a diagnostic or medical decision tool.*
 
 ---
 
 ## 🚀 Features
 
-- 🧠 **LLM-Powered Analysis** — Uses Gemini to infer probable diseases and advice from symptoms.
-- 🌍 **Interactive Dashboard** — Displays symptom clusters on a map.
-- 🔐 **Login System** — Basic Firebase authentication (email/password).
-- 🗄️ **Firestore Integration** — Stores user queries and timestamps for analytics.
-- 🎨 **Clean UI/UX** — Simple, responsive, and beginner-friendly.
+- 🧩 **Symptom Analysis (via Gemini LLM):**  
+  Users can enter symptoms in natural language — MediScope suggests probable conditions and advice.
+
+- 🌍 **Location-Based Mapping:**  
+  Visualizes symptom data on an interactive map (Leaflet.js + Firebase).
+
+- 🩺 **Outbreak Prediction:**  
+  Detects clusters of similar symptoms to predict potential disease outbreaks.
+
+- 💬 **LLM Health Chatbot (Planned):**  
+  Provides preventive health guidance and hospital recommendations.
+
+- 🔐 **User Authentication (Firebase Auth):**  
+  Allows users to register, log in, and view personalized dashboards.
 
 ---
 
-## 🧩 Architecture Overview
-
-**Frontend**
-- `index.html`: User input form.
-- `dashboard.html`: Visualization using Leaflet.js map.
-
-**Backend**
-- `app.py`: Flask API — receives symptoms → queries Gemini → returns JSON.
-- Firestore stores user data and responses.
-
-**LLM**
-- Google Gemini (`gemini-2.0-flash`) used via `google-generativeai`.
-
----
-
-## 🧰 Tech Stack
+## ⚙️ Tech Stack
 
 | Layer | Technology |
 |-------|-------------|
-| Frontend | HTML, CSS, JS, Leaflet.js |
-| Backend | Python, Flask |
-| AI Model | Google Gemini |
-| Database | Firebase Firestore |
-| Auth | Firebase Authentication |
+| **Frontend** | HTML, CSS, JavaScript |
+| **Backend** | Flask (Python) |
+| **LLM** | Gemini API (Google Generative AI) |
+| **Database** | Firebase Firestore |
+| **Maps** | Leaflet.js + OpenStreetMap |
+| **Hosting (optional)** | Firebase Hosting / Render |
 
 ---
 
-## ⚙️ Setup Instructions
+## 🧰 Installation & Setup
 
-### 1️⃣ Clone the Repo
+### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/MediScope.git
-cd MediScope
+git clone https://github.com/Bhaminee-Ojha/MEDISCOPE.git
+cd MEDISCOPE
+
